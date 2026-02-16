@@ -1,10 +1,9 @@
 # Tesla Model 3 GLB 구조 분석
 
-=== Tesla Model 3 GLB 구조 분석 ===
 
-```
 전체 씬 구조:
 ------------------------------------------------------------
+```
 [Group] Sketchfab_Scene
   [Object3D] Sketchfab_model
     [Object3D] 888d5b4c0a7b42299d217c2edec42266fbx
@@ -659,6 +658,7 @@
               [Mesh] wheels001_wheels6_0
                 └ Geometry: vertices=23464
                 └ Material: wheels.6
+```
 
 ============================================================
 총 메시 수: 176
@@ -677,5 +677,6 @@
 
 ✅ 위 구조를 보고 제어 가능한 파트를 확인하세요.
 
-```
+
+
 
