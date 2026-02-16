@@ -1,5 +1,13 @@
 # Tesla Model 3 GLB 구조 분석
 
+<img width="1331" height="949" alt="001" src="https://github.com/user-attachments/assets/b32fabbe-820d-42c1-b6fb-9ff17b844377" />
+<br>
+<img width="1331" height="949" alt="002" src="https://github.com/user-attachments/assets/0f96d542-0b6e-4098-b557-b024169401cf" />
+<br>
+<img width="1331" height="949" alt="003" src="https://github.com/user-attachments/assets/29cb27ae-ec35-4338-88f6-0528429c72a1" />
+<br>
+<img width="1331" height="949" alt="004" src="https://github.com/user-attachments/assets/7d0ac1c8-9745-4bd5-8011-a61e0276d8ca" />
+<br>
 
 전체 씬 구조:
 ------------------------------------------------------------
@@ -679,4 +687,5 @@
 ✅ 위 구조를 보고 제어 가능한 파트를 확인하세요.
 
 ```
+
 
