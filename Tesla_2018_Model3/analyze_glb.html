@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Tesla GLB 모델 구조 분석</title>
+</head>
+<body>
+    <h1>Tesla Model 3 GLB 구조 분석</h1>
+    <pre id="output">로딩중...</pre>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.159.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.159.0/examples/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+        const output = document.getElementById('output');
+        const loader = new GLTFLoader();
+
+        loader.load('tesla_2018_model_3.glb', (gltf) => {
+            let result = '=== Tesla Model 3 GLB 구조 분석 ===\n\n';
+            
+            result += '전체 씬 구조:\n';
+            result += '-'.repeat(60) + '\n';
+            
+            let meshCount = 0;
+            let geometryCount = 0;
+            let materialCount = 0;
+            
+            gltf.scene.traverse((child) => {
+                const indent = '  '.repeat(getDepth(child));
+                result += `${indent}[${child.type}] ${child.name || '(unnamed)'}\n`;
+                
+                if (child.isMesh) {
+                    meshCount++;
+                    result += `${indent}  └ Geometry: vertices=${child.geometry.attributes.position.count}\n`;
+                    
+                    if (child.material) {
+                        if (Array.isArray(child.material)) {
+                            result += `${indent}  └ Materials: ${child.material.length} materials\n`;
+                            materialCount += child.material.length;
+                        } else {
+                            result += `${indent}  └ Material: ${child.material.name || child.material.type}\n`;
+                            materialCount++;
+                        }
+                    }
+                }
+            });
+            
+            result += '\n' + '='.repeat(60) + '\n';
+            result += `총 메시 수: ${meshCount}\n`;
+            result += `총 지오메트리 수: ${geometryCount}\n`;
+            result += `총 머티리얼 수: ${materialCount}\n`;
+            result += '='.repeat(60) + '\n\n';
+            
+            result += '애니메이션 정보:\n';
+            result += '-'.repeat(60) + '\n';
+            if (gltf.animations && gltf.animations.length > 0) {
+                gltf.animations.forEach((anim, i) => {
+                    result += `Animation ${i}: ${anim.name} (duration: ${anim.duration}s)\n`;
+                    anim.tracks.forEach(track => {
+                        result += `  - ${track.name}: ${track.ValueTypeName}\n`;
+                    });
+                });
+            } else {
+                result += '애니메이션 없음\n';
+            }
+            
+            result += '\n' + '='.repeat(60) + '\n';
+            result += '결론:\n';
+            result += '-'.repeat(60) + '\n';
+            
+            if (meshCount <= 5) {
+                result += '⚠️ 이 모델은 소수의 메시로 구성되어 있습니다.\n';
+                result += '⚠️ 도어, 트렁크 등이 개별 오브젝트로 분리되지 않았습니다.\n';
+                result += '⚠️ 파트별 제어가 불가능합니다.\n\n';
+                result += '해결 방법:\n';
+                result += '1. Blender에서 모델을 열어 파트별로 분리\n';
+                result += '2. 각 파트에 이름 부여 (door_fl, door_fr, trunk 등)\n';
+                result += '3. 피벗 포인트 설정 (회전 중심점)\n';
+                result += '4. 수정된 GLB 파일로 다시 익스포트\n';
+            } else {
+                result += '✅ 이 모델은 여러 메시로 구성되어 있습니다.\n';
+                result += '✅ 위 구조를 보고 제어 가능한 파트를 확인하세요.\n';
+            }
+            
+            output.textContent = result;
+            
+        }, undefined, (error) => {
+            output.textContent = 'Error loading model: ' + error;
+        });
+
+        function getDepth(obj) {
+            let depth = 0;
+            let current = obj;
+            while (current.parent) {
+                depth++;
+                current = current.parent;
+            }
+            return depth;
+        }
+    </script>
+</body>
+</html>
