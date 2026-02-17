@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tesla Model 3 Controller</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: #ffffff;
+            overflow: hidden;
+        }
+
+        #container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+        }
+
+        #controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            min-width: 280px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        #controls h2 {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #3b82f6;
+            border-bottom: 2px solid #3b82f6;
+            padding-bottom: 10px;
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-group h3 {
+            font-size: 14px;
+            color: #9ca3af;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button.active {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        button.full-width {
+            grid-column: 1 / -1;
+        }
+
+        #info {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 15px 20px;
+            border-radius: 10px;
+            font-size: 12px;
+            color: #9ca3af;
+        }
+
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 1000;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10b981;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="canvas-container"></div>
+        
+        <div id="loading">
+            <div class="spinner"></div>
+            <p>Tesla Model 3 로딩중...</p>
+        </div>
+
+        <div id="controls" style="display: none;">
+            <h2>🚗 Tesla Model 3</h2>
+            
+            <div class="control-group">
+                <h3>🔒 도어 잠금</h3>
+                <div class="button-group">
+                    <button id="btn-lock" class="full-width/2">잠금</button>
+                    <button id="btn-unlock" class="full-width/2 active">열기</button>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <h3>🚪 도어 개폐</h3>
+                <div class="button-group">
+                    <button id="btn-open-all">모두 열기</button>
+                    <button id="btn-close-all">모두 닫기</button>
+                    <button id="btn-door-fl">좌측 앞</button>
+                    <button id="btn-door-fr">우측 앞</button>
+                    <button id="btn-door-rl">좌측 뒤</button>
+                    <button id="btn-door-rr">우측 뒤</button>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <h3>💡 라이트</h3>
+                <div class="button-group">
+                    <button id="btn-headlight">헤드라이트</button>
+                    <button id="btn-left-signal">좌측 방향등</button>
+                    <button id="btn-right-signal">우측 방향등</button>
+                    <button id="btn-hazard">비상등</button>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <h3>🔧 트렁크/미러</h3>
+                <div class="button-group">
+                    <button id="btn-frunk">프론트 트렁크</button>
+                    <button id="btn-trunk">리어 트렁크</button>
+                    <button id="btn-mirror-fold">미러 접기</button>
+                    <button id="btn-mirror-unfold" class="active">미러 펴기</button>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <h3>🎨 테마</h3>
+                <div class="button-group">
+                    <button id="btn-theme-dark" class="active">다크 모드</button>
+                    <button id="btn-theme-bright">브라이트 모드</button>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <h3>🚗 차량 색상</h3>
+                <div class="button-group">
+                    <button id="btn-color-white" class="active" style="background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%); color: #333;">화이트</button>
+                    <button id="btn-color-black" style="background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%);">블랙</button>
+                    <button id="btn-color-red" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">레드</button>
+                    <button id="btn-color-blue" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);">블루</button>
+                    <button id="btn-color-gray" style="background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);">그레이</button>
+                    <button id="btn-color-silver" style="background: linear-gradient(135deg, #d1d5db 0%, #9ca3af 100%); color: #333;">실버</button>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <h3>🔧 개발자 도구</h3>
+                <div class="button-group">
+                    <button id="btn-analyze" class="full-width">모델 구조 분석</button>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <h3>🎮 뷰 컨트롤</h3>
+                <div class="button-group">
+                    <button id="btn-view-front" class="full-width">정면</button>
+                    <button id="btn-view-back" class="full-width">후면</button>
+                    <button id="btn-view-left">좌측면</button>
+                    <button id="btn-view-right">우측면</button>
+                    <button id="btn-view-top">상단</button>
+                    <button id="btn-view-bottom">하단</button>
+                    <button id="btn-reset" class="full-width">리셋 (ISO)</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="info">
+            <span class="status-indicator"></span>
+            <strong>조작:</strong> 마우스 드래그(회전) | 휠(줌) | 우클릭(이동)
+        </div>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.159.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.159.0/examples/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // Scene setup
+        const scene = new THREE.Scene();
+        let isDarkMode = true;
+        const darkColor = 0x1a1a1a;
+        const brightColor = 0xe8e8e8;
+        scene.background = new THREE.Color(darkColor);
+        scene.fog = new THREE.Fog(darkColor, 10, 50);
+
+        // Camera
+        const camera = new THREE.PerspectiveCamera(
+            45,
+            window.innerWidth / window.innerHeight,
+            0.1,
+            1000
+        );
+        camera.position.set(-5, 3, -5); // ISO 뷰 (좌측 후면)
+
+        // Renderer
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        // Controls
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.minDistance = 3;
+        controls.maxDistance = 15;
+        controls.maxPolarAngle = Math.PI / 2;
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+
+        const directionalLight1 = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight1.position.set(5, 10, 5);
+        directionalLight1.castShadow = true;
+        directionalLight1.shadow.mapSize.width = 2048;
+        directionalLight1.shadow.mapSize.height = 2048;
+        scene.add(directionalLight1);
+
+        const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.4);
+        directionalLight2.position.set(-5, 5, -5);
+        scene.add(directionalLight2);
+
+        // Ground
+        const groundGeometry = new THREE.CircleGeometry(20, 64);
+        const darkGroundColor = 0x2d2d2d;
+        const brightGroundColor = 0xcccccc;
+        const groundMaterial = new THREE.MeshStandardMaterial({
+            color: darkGroundColor,
+            roughness: 0.8,
+            metalness: 0.2
+        });
+        const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+        ground.rotation.x = -Math.PI / 2;
+        ground.receiveShadow = true;
+        scene.add(ground);
+
+        // Grid
+        const darkGridColor1 = 0x444444;
+        const darkGridColor2 = 0x333333;
+        const brightGridColor1 = 0x999999;
+        const brightGridColor2 = 0xaaaaaa;
+        const gridHelper = new THREE.GridHelper(20, 20, darkGridColor1, darkGridColor2);
+        gridHelper.position.y = 0.01;
+        scene.add(gridHelper);
+
+        // Model loading
+        let teslaModel = null;
+        let carMeshes = []; // 차량 메시들을 저장
+        let lightMeshes = []; // 라이트 메시들을 저장
+        let signalBlinkInterval = null; // 방향등 깜빡임 인터벌
+        let modelParts = {
+            doors: {
+                fl: null,
+                fr: null,
+                rl: null,
+                rr: null
+            },
+            frunk: null,
+            trunk: null,
+            mirrors: {
+                left: null,
+                right: null
+            },
+            lights: {
+                headlight: null,
+                taillight: null,
+                leftSignal: null,
+                rightSignal: null
+            }
+        };
+        let partStates = {
+            doors: { fl: false, fr: false, rl: false, rr: false },
+            frunk: false,
+            trunk: false,
+            locked: false,
+            mirrors: { folded: false },
+            lights: {
+                headlight: false,
+                leftSignal: false,
+                rightSignal: false,
+                hazard: false
+            }
+        };
+
+        const loader = new GLTFLoader();
+        loader.load(
+            'tesla_2018_model_3.glb',
+            (gltf) => {
+                teslaModel = gltf.scene;
+                
+                // Center and scale model
+                const box = new THREE.Box3().setFromObject(teslaModel);
+                const center = box.getCenter(new THREE.Vector3());
+                const size = box.getSize(new THREE.Vector3());
+                
+                const maxDim = Math.max(size.x, size.y, size.z);
+                const scale = 4 / maxDim;
+                teslaModel.scale.setScalar(scale);
+                
+                teslaModel.position.sub(center.multiplyScalar(scale));
+                // 타이어가 바닥에 닿도록 Y축 조정
+                const minY = box.min.y * scale;
+                teslaModel.position.y = -minY;
+
+                // Enable shadows and find controllable parts
+                teslaModel.traverse((child) => {
+                    // 도어 찾기
+                    if (child.name === 'door_lf') modelParts.doors.fl = child;
+                    if (child.name === 'door_lr') modelParts.doors.rl = child;
+                    if (child.name === 'door_rf') modelParts.doors.fr = child;
+                    if (child.name === 'door_rr') modelParts.doors.rr = child;
+                    
+                    // 트렁크/후드 찾기
+                    if (child.name === 'boot_dummy') modelParts.trunk = child;
+                    if (child.name === 'bonnet_dummy') modelParts.frunk = child;
+                    
+                    // 라이트 메시 찾기
+                    if (child.name === 'chrome_Lights_head_l' || child.name === 'chrome_foglight_l' || child.name === 'chrome_foglight_r') {
+                        modelParts.lights.headlight = child;
+                    }
+                    if (child.name === 'turn_indicat_l') modelParts.lights.leftSignal = child;
+                    if (child.name === 'turn_indicat_r') modelParts.lights.rightSignal = child;
+                    if (child.name === 'rear_lights') modelParts.lights.taillight = child;
+                    
+                    if (child.isMesh) {
+                        child.castShadow = true;
+                        child.receiveShadow = true;
+                        
+                        // 차량 메시 수집 (바퀴, 유리 등 제외하고 차체만)
+                        if (child.material && child.name.toLowerCase().indexOf('wheel') === -1 
+                            && child.name.toLowerCase().indexOf('tire') === -1
+                            && child.name.toLowerCase().indexOf('glass') === -1
+                            && child.name.toLowerCase().indexOf('window') === -1) {
+                            carMeshes.push(child);
+                        }
+                        
+                        // 라이트 메시 수집
+                        const nameLower = child.name.toLowerCase();
+                        if (nameLower.indexOf('light') !== -1 || 
+                            nameLower.indexOf('lamp') !== -1 ||
+                            nameLower.indexOf('indicator') !== -1 ||
+                            nameLower.indexOf('foglight') !== -1) {
+                            lightMeshes.push(child);
+                        }
+                    }
+                });
+
+                console.log('=== 제어 가능 파트 확인 ===');
+                console.log(`도어 FL: ${modelParts.doors.fl ? '✓' : '✗'}`);
+                console.log(`도어 FR: ${modelParts.doors.fr ? '✓' : '✗'}`);
+                console.log(`도어 RL: ${modelParts.doors.rl ? '✓' : '✗'}`);
+                console.log(`도어 RR: ${modelParts.doors.rr ? '✓' : '✗'}`);
+                console.log(`프론트 트렁크: ${modelParts.frunk ? '✓' : '✗'}`);
+                console.log(`리어 트렁크: ${modelParts.trunk ? '✓' : '✗'}`);
+                console.log(`라이트 메시: ${lightMeshes.length}개`);
+
+                console.log('=== Tesla Model 3 Structure ===');
+                let meshCount = 0;
+                let result = '\n=== Tesla Model 3 GLB 구조 분석 ===\n\n';
+                
+                teslaModel.traverse((child) => {
+                    if (child.name) {
+                        const indent = '  '.repeat(getDepth(child));
+                        result += `${indent}[${child.type}] ${child.name}\n`;
+                        console.log(`${indent}Name: ${child.name}, Type: ${child.type}`);
+                        
+                        if (child.isMesh) {
+                            meshCount++;
+                            const vertexCount = child.geometry.attributes.position.count;
+                            result += `${indent}  └ Vertices: ${vertexCount}\n`;
+                            console.log(`${indent}  └ Vertices: ${vertexCount}`);
+                            
+                            if (child.material) {
+                                if (Array.isArray(child.material)) {
+                                    result += `${indent}  └ Materials: ${child.material.length}\n`;
+                                    console.log(`${indent}  └ Materials: ${child.material.length}`);
+                                } else {
+                                    result += `${indent}  └ Material: ${child.material.name || child.material.type}\n`;
+                                    console.log(`${indent}  └ Material: ${child.material.name || child.material.type}`);
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                result += `\n총 메시 수: ${meshCount}\n`;
+                result += `총 오브젝트: ${carMeshes.length}개 차체 메시\n`;
+                result += `\n분석 완료! 개발자 도구(F12) Console 탭에서 상세 정보를 확인하세요.\n`;
+                
+                console.log('\n' + '='.repeat(60));
+                console.log(`총 메시 수: ${meshCount}`);
+                console.log(`총 차체 메시: ${carMeshes.length}`);
+                console.log('='.repeat(60));
+                
+                // Alert로도 요약 표시
+                alert(result);
+                
+                function getDepth(obj) {
+                    let depth = 0;
+                    let current = obj;
+                    while (current.parent) {
+                        depth++;
+                        current = current.parent;
+                    }
+                    return depth;
+                }
+
+                scene.add(teslaModel);
+                
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('controls').style.display = 'block';
+            },
+            (progress) => {
+                const percent = (progress.loaded / progress.total * 100).toFixed(0);
+                console.log(`Loading: ${percent}%`);
+            },
+            (error) => {
+                console.error('Error loading model:', error);
+                document.getElementById('loading').innerHTML = '<p>모델 로딩 실패</p>';
+            }
+        );
+
+        // Animation helpers
+        function animateRotation(object, targetRotation, duration = 500) {
+            if (!object) return;
+            
+            const startRotation = { ...object.rotation };
+            const startTime = Date.now();
+            
+            function animate() {
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+                
+                object.rotation.y = startRotation.y + (targetRotation - startRotation.y) * eased;
+                object.rotation.z = startRotation.z + (targetRotation - startRotation.z) * eased * 0.3;
+                
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                }
+            }
+            
+            animate();
+        }
+
+        // Button handlers
+        function toggleButton(buttonId, state) {
+            const button = document.getElementById(buttonId);
+            if (state) {
+                button.classList.add('active');
+            } else {
+                button.classList.remove('active');
+            }
+        }
+
+        // Animation helper function
+        function animatePart(part, targetRotation, axis = 'y', duration = 800) {
+            if (!part) return;
+            
+            const startRotation = part.rotation[axis];
+            const startTime = Date.now();
+            
+            function animate() {
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                // Ease-out cubic
+                const eased = 1 - Math.pow(1 - progress, 3);
+                
+                part.rotation[axis] = startRotation + (targetRotation - startRotation) * eased;
+                
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                }
+            }
+            
+            animate();
+        }
+
+        // Door lock/unlock controls
+        document.getElementById('btn-lock').addEventListener('click', () => {
+            partStates.locked = true;
+            toggleButton('btn-lock', true);
+            toggleButton('btn-unlock', false);
+            //console.log('차량 잠금');
+			// 비상등 2회 깜빡임
+            flashHazardLights(2);
+            
+            // 잠금 소리 (비프음 2회)
+            //playBeep(2, 200);
+			playSound('lock-unlock.mp3');
+            
+            console.log('🔒 차량 잠금 (비상등 2회 깜빡임)');
+        });
+
+        document.getElementById('btn-unlock').addEventListener('click', () => {
+            partStates.locked = false;
+            toggleButton('btn-lock', false);
+            toggleButton('btn-unlock', true);
+            //console.log('차량 잠금 해제');
+            // 비상등 1회 깜빡임
+            flashHazardLights(1);
+            
+            // 해제 소리 (비프음 1회)
+            //playBeep(1, 150);
+			playSound('lock-unlock.mp3');
+            
+            console.log('🔓 차량 잠금 해제 (비상등 1회 깜빡임)');			
+        });
+
+        // 비상등 깜빡임 효과
+        function flashHazardLights(count) {
+            let flashCount = 0;
+            const flashInterval = setInterval(() => {
+                const isOn = flashCount % 2 === 0;
+                
+                // 라이트 메시 깜빡임
+                lightMeshes.forEach(mesh => {
+                    const nameLower = mesh.name.toLowerCase();
+                    if (nameLower.indexOf('indicator') !== -1 || 
+                        nameLower.indexOf('turn_indicat') !== -1) {
+                        if (mesh.material) {
+                            if (isOn) {
+                                mesh.material.emissive = new THREE.Color(0xffaa00);
+                                mesh.material.emissiveIntensity = 1.0;
+                            } else {
+                                mesh.material.emissive = new THREE.Color(0x000000);
+                                mesh.material.emissiveIntensity = 0;
+                            }
+                        }
+                    }
+                });
+                
+                console.log(isOn ? '💡 비상등 ON' : '⚫ 비상등 OFF');
+                
+                flashCount++;
+                if (flashCount >= count * 2) {
+                    clearInterval(flashInterval);
+                    // 깜빡임 종료 후 끄기
+                    lightMeshes.forEach(mesh => {
+                        if (mesh.material) {
+                            mesh.material.emissive = new THREE.Color(0x000000);
+                            mesh.material.emissiveIntensity = 0;
+                        }
+                    });
+                }
+            }, 200); // 200ms 간격
+        }
+
+        // 사운드 재생
+        function playSound(filename) {
+            const audio = new Audio(filename);
+            audio.volume = 0.5; // 볼륨 50%
+            audio.play().catch(err => {
+                console.log('사운드 재생 실패:', err);
+            });
+        }
+
+        // 비프음 재생
+        function playBeep(count, duration) {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            let beepCount = 0;
+            
+            function beep() {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = 800; // 800Hz
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration / 1000);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + duration / 1000);
+                
+                beepCount++;
+                if (beepCount < count) {
+                    setTimeout(beep, duration + 100);
+                }
+            }
+            
+            beep();
+        }
+		
+        // Open/Close All controls
+        document.getElementById('btn-open-all').addEventListener('click', () => {
+            if (partStates.locked) {
+                alert('차량이 잠겨있습니다. 먼저 잠금을 해제하세요.');
+                return;
+            }
+            
+            // 모든 도어 열기
+            if (modelParts.doors.fl && !partStates.doors.fl) {
+                partStates.doors.fl = true;
+                toggleButton('btn-door-fl', true);
+                animatePart(modelParts.doors.fl, -Math.PI / 3, 'z');
+            }
+            if (modelParts.doors.fr && !partStates.doors.fr) {
+                partStates.doors.fr = true;
+                toggleButton('btn-door-fr', true);
+                animatePart(modelParts.doors.fr, Math.PI / 3, 'z');
+            }
+            if (modelParts.doors.rl && !partStates.doors.rl) {
+                partStates.doors.rl = true;
+                toggleButton('btn-door-rl', true);
+                animatePart(modelParts.doors.rl, -Math.PI / 3, 'z');
+            }
+            if (modelParts.doors.rr && !partStates.doors.rr) {
+                partStates.doors.rr = true;
+                toggleButton('btn-door-rr', true);
+                animatePart(modelParts.doors.rr, Math.PI / 3, 'z');
+            }
+            
+            // 프론트 트렁크 열기
+            if (modelParts.frunk && !partStates.frunk) {
+                partStates.frunk = true;
+                toggleButton('btn-frunk', true);
+                animatePart(modelParts.frunk, Math.PI / 4, 'x');
+            }
+            
+            // 리어 트렁크 열기
+            if (modelParts.trunk && !partStates.trunk) {
+                partStates.trunk = true;
+                toggleButton('btn-trunk', true);
+                animatePart(modelParts.trunk, -Math.PI / 4, 'x');
+            }
+            
+			playSound('door_open.mp3');
+			
+            console.log('모든 도어 및 트렁크 열림');
+        });
+
+        document.getElementById('btn-close-all').addEventListener('click', () => {
+            // 모든 도어 닫기
+            if (modelParts.doors.fl && partStates.doors.fl) {
+                partStates.doors.fl = false;
+                toggleButton('btn-door-fl', false);
+                animatePart(modelParts.doors.fl, 0, 'z');
+            }
+            if (modelParts.doors.fr && partStates.doors.fr) {
+                partStates.doors.fr = false;
+                toggleButton('btn-door-fr', false);
+                animatePart(modelParts.doors.fr, 0, 'z');
+            }
+            if (modelParts.doors.rl && partStates.doors.rl) {
+                partStates.doors.rl = false;
+                toggleButton('btn-door-rl', false);
+                animatePart(modelParts.doors.rl, 0, 'z');
+            }
+            if (modelParts.doors.rr && partStates.doors.rr) {
+                partStates.doors.rr = false;
+                toggleButton('btn-door-rr', false);
+                animatePart(modelParts.doors.rr, 0, 'z');
+            }
+            
+            // 프론트 트렁크 닫기
+            if (modelParts.frunk && partStates.frunk) {
+                partStates.frunk = false;
+                toggleButton('btn-frunk', false);
+                animatePart(modelParts.frunk, 0, 'x');
+            }
+            
+            // 리어 트렁크 닫기
+            if (modelParts.trunk && partStates.trunk) {
+                partStates.trunk = false;
+                toggleButton('btn-trunk', false);
+                animatePart(modelParts.trunk, 0, 'x');
+            }
+            
+			playSound('door_close.mp3');
+			
+            console.log('모든 도어 및 트렁크 닫힘');
+        });
+
+        // Door controls with real 3D animation
+        document.getElementById('btn-door-fl').addEventListener('click', () => {
+            if (partStates.locked) {
+                alert('차량이 잠겨있습니다. 먼저 잠금을 해제하세요.');
+                return;
+            }
+            if (!modelParts.doors.fl) {
+                console.log('도어 파트를 찾을 수 없습니다.');
+                return;
+            }
+            partStates.doors.fl = !partStates.doors.fl;
+            toggleButton('btn-door-fl', partStates.doors.fl);
+            // 좌측 도어는 Z축 기준 양의 방향으로 회전
+            animatePart(modelParts.doors.fl, partStates.doors.fl ? -Math.PI / 3 : 0, 'z');
+            console.log('좌측 앞 도어:', partStates.doors.fl ? '열림' : '닫힘');
+        });
+
+        document.getElementById('btn-door-fr').addEventListener('click', () => {
+            if (partStates.locked) {
+                alert('차량이 잠겨있습니다. 먼저 잠금을 해제하세요.');
+                return;
+            }
+            if (!modelParts.doors.fr) {
+                console.log('도어 파트를 찾을 수 없습니다.');
+                return;
+            }
+            partStates.doors.fr = !partStates.doors.fr;
+            toggleButton('btn-door-fr', partStates.doors.fr);
+            // 우측 도어는 Z축 기준 음의 방향으로 회전
+            animatePart(modelParts.doors.fr, partStates.doors.fr ? Math.PI / 3 : 0, 'z');
+            console.log('우측 앞 도어:', partStates.doors.fr ? '열림' : '닫힘');
+        });
+
+        document.getElementById('btn-door-rl').addEventListener('click', () => {
+            if (partStates.locked) {
+                alert('차량이 잠겨있습니다. 먼저 잠금을 해제하세요.');
+                return;
+            }
+            if (!modelParts.doors.rl) {
+                console.log('도어 파트를 찾을 수 없습니다.');
+                return;
+            }
+            partStates.doors.rl = !partStates.doors.rl;
+            toggleButton('btn-door-rl', partStates.doors.rl);
+            animatePart(modelParts.doors.rl, partStates.doors.rl ? -Math.PI / 3 : 0, 'z');
+            console.log('좌측 뒤 도어:', partStates.doors.rl ? '열림' : '닫힘');
+        });
+
+        document.getElementById('btn-door-rr').addEventListener('click', () => {
+            if (partStates.locked) {
+                alert('차량이 잠겨있습니다. 먼저 잠금을 해제하세요.');
+                return;
+            }
+            if (!modelParts.doors.rr) {
+                console.log('도어 파트를 찾을 수 없습니다.');
+                return;
+            }
+            partStates.doors.rr = !partStates.doors.rr;
+            toggleButton('btn-door-rr', partStates.doors.rr);
+            animatePart(modelParts.doors.rr, partStates.doors.rr ? Math.PI / 3 : 0, 'z');
+            console.log('우측 뒤 도어:', partStates.doors.rr ? '열림' : '닫힘');
+        });
+
+        // Frunk and Trunk controls with real animation
+        document.getElementById('btn-frunk').addEventListener('click', () => {
+            if (!modelParts.frunk) {
+                console.log('프론트 트렁크 파트를 찾을 수 없습니다.');
+                return;
+            }
+            partStates.frunk = !partStates.frunk;
+            toggleButton('btn-frunk', partStates.frunk);
+            // 후드는 X축 기준으로 위로 열림 (방향 반전)
+            animatePart(modelParts.frunk, partStates.frunk ? Math.PI / 4 : 0, 'x');
+            console.log('프론트 트렁크:', partStates.frunk ? '열림' : '닫힘');
+        });
+
+        document.getElementById('btn-trunk').addEventListener('click', () => {
+            if (!modelParts.trunk) {
+                console.log('리어 트렁크 파트를 찾을 수 없습니다.');
+                return;
+            }
+            partStates.trunk = !partStates.trunk;
+            toggleButton('btn-trunk', partStates.trunk);
+            // 트렁크는 X축 기준으로 위로 열림
+            animatePart(modelParts.trunk, partStates.trunk ? -Math.PI / 4 : 0, 'x');
+            console.log('리어 트렁크:', partStates.trunk ? '열림' : '닫힘');
+        });
+
+        // Mirror controls
+        document.getElementById('btn-mirror-fold').addEventListener('click', () => {
+            partStates.mirrors.folded = true;
+            toggleButton('btn-mirror-fold', true);
+            toggleButton('btn-mirror-unfold', false);
+            console.log('사이드미러 접힘');
+        });
+
+        document.getElementById('btn-mirror-unfold').addEventListener('click', () => {
+            partStates.mirrors.folded = false;
+            toggleButton('btn-mirror-fold', false);
+            toggleButton('btn-mirror-unfold', true);
+            console.log('사이드미러 펼침');
+        });
+
+        // Light controls
+        function stopSignalBlink() {
+            if (signalBlinkInterval) {
+                clearInterval(signalBlinkInterval);
+                signalBlinkInterval = null;
+            }
+        }
+
+        document.getElementById('btn-headlight').addEventListener('click', () => {
+            partStates.lights.headlight = !partStates.lights.headlight;
+            toggleButton('btn-headlight', partStates.lights.headlight);
+            
+            // 라이트 밝기 조절 (시뮬레이션)
+            lightMeshes.forEach(mesh => {
+                if (mesh.material) {
+                    if (partStates.lights.headlight) {
+                        mesh.material.emissive = new THREE.Color(0xffffaa);
+                        mesh.material.emissiveIntensity = 0.8;
+                    } else {
+                        mesh.material.emissive = new THREE.Color(0x000000);
+                        mesh.material.emissiveIntensity = 0;
+                    }
+                }
+            });
+            
+            console.log('헤드라이트:', partStates.lights.headlight ? 'ON' : 'OFF');
+        });
+
+        document.getElementById('btn-left-signal').addEventListener('click', () => {
+            stopSignalBlink();
+            partStates.lights.leftSignal = !partStates.lights.leftSignal;
+            partStates.lights.rightSignal = false;
+            partStates.lights.hazard = false;
+            
+            toggleButton('btn-left-signal', partStates.lights.leftSignal);
+            toggleButton('btn-right-signal', false);
+            toggleButton('btn-hazard', false);
+            
+            if (partStates.lights.leftSignal) {
+                // 깜빡임 효과 (시뮬레이션)
+                let blinkState = false;
+                signalBlinkInterval = setInterval(() => {
+                    blinkState = !blinkState;
+                    console.log('좌측 방향등:', blinkState ? '●' : '○');
+                }, 500);
+            }
+            
+            console.log('좌측 방향등:', partStates.lights.leftSignal ? 'ON' : 'OFF');
+        });
+
+        document.getElementById('btn-right-signal').addEventListener('click', () => {
+            stopSignalBlink();
+            partStates.lights.rightSignal = !partStates.lights.rightSignal;
+            partStates.lights.leftSignal = false;
+            partStates.lights.hazard = false;
+            
+            toggleButton('btn-right-signal', partStates.lights.rightSignal);
+            toggleButton('btn-left-signal', false);
+            toggleButton('btn-hazard', false);
+            
+            if (partStates.lights.rightSignal) {
+                // 깜빡임 효과 (시뮬레이션)
+                let blinkState = false;
+                signalBlinkInterval = setInterval(() => {
+                    blinkState = !blinkState;
+                    console.log('우측 방향등:', blinkState ? '●' : '○');
+                }, 500);
+            }
+            
+            console.log('우측 방향등:', partStates.lights.rightSignal ? 'ON' : 'OFF');
+        });
+
+        document.getElementById('btn-hazard').addEventListener('click', () => {
+            stopSignalBlink();
+            partStates.lights.hazard = !partStates.lights.hazard;
+            partStates.lights.leftSignal = false;
+            partStates.lights.rightSignal = false;
+            
+            toggleButton('btn-hazard', partStates.lights.hazard);
+            toggleButton('btn-left-signal', false);
+            toggleButton('btn-right-signal', false);
+            
+            if (partStates.lights.hazard) {
+                // 비상등 깜빡임 효과 (시뮬레이션)
+                let blinkState = false;
+                signalBlinkInterval = setInterval(() => {
+                    blinkState = !blinkState;
+                    console.log('비상등:', blinkState ? '●●' : '○○');
+                }, 500);
+            }
+            
+            console.log('비상등:', partStates.lights.hazard ? 'ON' : 'OFF');
+        });
+
+        // Developer tools
+        document.getElementById('btn-analyze').addEventListener('click', () => {
+            if (!teslaModel) {
+                alert('모델이 아직 로드되지 않았습니다.');
+                return;
+            }
+            
+            console.clear();
+            console.log('\n' + '='.repeat(70));
+            console.log('🔍 Tesla Model 3 GLB 구조 분석');
+            console.log('='.repeat(70) + '\n');
+            
+            let meshCount = 0;
+            let objectList = [];
+            
+            teslaModel.traverse((child) => {
+                const depth = getDepthLevel(child);
+                const indent = '  '.repeat(depth);
+                
+                let info = `${indent}[${child.type}] ${child.name || '(unnamed)'}`;
+                
+                if (child.isMesh) {
+                    meshCount++;
+                    const vertexCount = child.geometry.attributes.position.count;
+                    info += ` - ${vertexCount} vertices`;
+                    
+                    if (child.material) {
+                        if (Array.isArray(child.material)) {
+                            info += ` - ${child.material.length} materials`;
+                        } else {
+                            info += ` - ${child.material.type}`;
+                        }
+                    }
+                }
+                
+                objectList.push(info);
+                console.log(info);
+            });
+            
+            console.log('\n' + '-'.repeat(70));
+            console.log(`📊 총 메시 수: ${meshCount}`);
+            console.log(`📦 총 차체 메시: ${carMeshes.length}개`);
+            console.log(`💡 총 라이트 메시: ${lightMeshes.length}개`);
+            console.log('-'.repeat(70));
+            
+            if (meshCount <= 10) {
+                console.log('\n⚠️ 경고: 이 모델은 소수의 메시로 구성되어 있습니다.');
+                console.log('⚠️ 도어, 트렁크 등이 개별 오브젝트로 분리되지 않았을 가능성이 높습니다.');
+                console.log('\n해결 방법:');
+                console.log('1. Blender에서 모델을 열어 파트별로 분리');
+                console.log('2. 각 파트에 의미있는 이름 부여 (door_fl, trunk 등)');
+                console.log('3. 피벗 포인트 설정 (회전 중심점)');
+                console.log('4. 수정된 GLB로 다시 익스포트');
+            } else {
+                console.log('\n✅ 이 모델은 여러 메시로 구성되어 있습니다.');
+                console.log('✅ 위 리스트에서 제어 가능한 파트를 확인하세요.');
+            }
+            
+            console.log('='.repeat(70) + '\n');
+            
+            alert(`모델 구조 분석 완료!\n\n총 메시: ${meshCount}개\n차체 메시: ${carMeshes.length}개\n라이트 메시: ${lightMeshes.length}개\n\n상세 정보는 개발자 도구(F12) Console 탭을 확인하세요.`);
+        });
+        
+        function getDepthLevel(obj) {
+            let depth = 0;
+            let current = obj;
+            while (current.parent) {
+                depth++;
+                current = current.parent;
+            }
+            return depth;
+        }
+
+        // View controls
+        document.getElementById('btn-view-front').addEventListener('click', () => {
+            camera.position.set(0, 1.5, -6); // 정면 (Z축 음수로 수정)
+            controls.target.set(0, 1, 0);
+            controls.update();
+        });
+
+        document.getElementById('btn-view-back').addEventListener('click', () => {
+            camera.position.set(0, 1.5, 6); // 후면 (Z축 양수로 수정)
+            controls.target.set(0, 1, 0);
+            controls.update();
+        });
+
+        document.getElementById('btn-view-left').addEventListener('click', () => {
+            camera.position.set(6, 1.5, 0); // 좌측면 (X축 양수로 수정)
+            controls.target.set(0, 1, 0);
+            controls.update();
+        });
+
+        document.getElementById('btn-view-right').addEventListener('click', () => {
+            camera.position.set(-6, 1.5, 0); // 우측면 (X축 음수로 수정)
+            controls.target.set(0, 1, 0);
+            controls.update();
+        });
+
+        document.getElementById('btn-view-top').addEventListener('click', () => {
+            camera.position.set(0, 8, 0.1); // 상단
+            controls.target.set(0, 0, 0);
+            controls.update();
+        });
+
+        document.getElementById('btn-view-bottom').addEventListener('click', () => {
+            camera.position.set(0, -8, 0); // 하단 (상단의 반대편, Z축 음수)
+            controls.target.set(0, 0, 0);
+            controls.update();
+        });
+
+        // Theme controls
+        function setTheme(dark) {
+            isDarkMode = dark;
+            const bgColor = dark ? darkColor : brightColor;
+            const gColor = dark ? darkGroundColor : brightGroundColor;
+            const grid1 = dark ? darkGridColor1 : brightGridColor1;
+            const grid2 = dark ? darkGridColor2 : brightGridColor2;
+            
+            scene.background = new THREE.Color(bgColor);
+            scene.fog = new THREE.Fog(bgColor, 10, 50);
+            groundMaterial.color.setHex(gColor);
+            gridHelper.material.color.setHex(grid1);
+            gridHelper.material.vertexColors = false;
+            
+            // 버튼 상태 업데이트
+            if (dark) {
+                document.getElementById('btn-theme-dark').classList.add('active');
+                document.getElementById('btn-theme-bright').classList.remove('active');
+                document.body.style.background = 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)';
+            } else {
+                document.getElementById('btn-theme-dark').classList.remove('active');
+                document.getElementById('btn-theme-bright').classList.add('active');
+                document.body.style.background = 'linear-gradient(135deg, #e0e0e0 0%, #f5f5f5 100%)';
+            }
+        }
+
+        document.getElementById('btn-theme-dark').addEventListener('click', () => {
+            setTheme(true);
+        });
+
+        document.getElementById('btn-theme-bright').addEventListener('click', () => {
+            setTheme(false);
+        });
+
+        // Car color controls
+        const carColors = {
+            white: 0xf5f5f5,
+            black: 0x1a1a1a,
+            red: 0xcc0000,
+            blue: 0x1e40af,
+            gray: 0x4b5563,
+            silver: 0xc0c0c0
+        };
+
+        function setCarColor(colorName) {
+            const color = carColors[colorName];
+            if (!color) return;
+
+            carMeshes.forEach(mesh => {
+                if (mesh.material) {
+                    // 기존 material의 속성을 유지하면서 색상만 변경
+                    if (Array.isArray(mesh.material)) {
+                        mesh.material.forEach(mat => {
+                            mat.color.setHex(color);
+                        });
+                    } else {
+                        mesh.material.color.setHex(color);
+                    }
+                }
+            });
+
+            // 모든 색상 버튼의 active 클래스 제거
+            document.querySelectorAll('[id^="btn-color-"]').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            // 선택된 색상 버튼에 active 클래스 추가
+            document.getElementById(`btn-color-${colorName}`).classList.add('active');
+        }
+
+        document.getElementById('btn-color-white').addEventListener('click', () => {
+            setCarColor('white');
+        });
+
+        document.getElementById('btn-color-black').addEventListener('click', () => {
+            setCarColor('black');
+        });
+
+        document.getElementById('btn-color-red').addEventListener('click', () => {
+            setCarColor('red');
+        });
+
+        document.getElementById('btn-color-blue').addEventListener('click', () => {
+            setCarColor('blue');
+        });
+
+        document.getElementById('btn-color-gray').addEventListener('click', () => {
+            setCarColor('gray');
+        });
+
+        document.getElementById('btn-color-silver').addEventListener('click', () => {
+            setCarColor('silver');
+        });
+
+        document.getElementById('btn-reset').addEventListener('click', () => {
+            camera.position.set(-5, 3, -5); // ISO 뷰 (좌측 후면)
+            controls.target.set(0, 1, 0);
+            controls.update();
+            
+            // Reset all door rotations
+            if (modelParts.doors.fl) modelParts.doors.fl.rotation.z = 0;
+            if (modelParts.doors.fr) modelParts.doors.fr.rotation.z = 0;
+            if (modelParts.doors.rl) modelParts.doors.rl.rotation.z = 0;
+            if (modelParts.doors.rr) modelParts.doors.rr.rotation.z = 0;
+            if (modelParts.frunk) modelParts.frunk.rotation.x = 0;
+            if (modelParts.trunk) modelParts.trunk.rotation.x = 0;
+            
+            // Reset all parts
+            Object.keys(partStates.doors).forEach(key => {
+                partStates.doors[key] = false;
+                toggleButton(`btn-door-${key}`, false);
+            });
+            partStates.frunk = false;
+            partStates.trunk = false;
+            partStates.locked = false;
+            partStates.mirrors.folded = false;
+            
+            toggleButton('btn-frunk', false);
+            toggleButton('btn-trunk', false);
+            toggleButton('btn-lock', false);
+            toggleButton('btn-unlock', true);
+            toggleButton('btn-mirror-fold', false);
+            toggleButton('btn-mirror-unfold', true);
+            
+            // Reset lights
+            stopSignalBlink();
+            partStates.lights.headlight = false;
+            partStates.lights.leftSignal = false;
+            partStates.lights.rightSignal = false;
+            partStates.lights.hazard = false;
+            
+            toggleButton('btn-headlight', false);
+            toggleButton('btn-left-signal', false);
+            toggleButton('btn-right-signal', false);
+            toggleButton('btn-hazard', false);
+            
+            // Reset light emissive
+            lightMeshes.forEach(mesh => {
+                if (mesh.material) {
+                    mesh.material.emissive = new THREE.Color(0x000000);
+                    mesh.material.emissiveIntensity = 0;
+                }
+            });
+        });
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // Window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
