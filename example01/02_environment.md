@@ -66,7 +66,7 @@ FreeCAD 설치: https://www.freecad.org/downloads.php
 5. Blender에서 OBJ 임포트
 ```
 
-**방법 B : online-convert 활용**
+**방법 B : online-convert 활용** <- 기능 확인 안됨.
 
 ```
 https://www.online-convert.com
@@ -74,7 +74,7 @@ STEP → OBJ 온라인 변환 후 Blender에서 임포트
 (파일 크기 100MB 미만 무료)
 ```
 
-**방법 C : CAD Assistant (Desktop 앱)**
+**방법 C : CAD Assistant (Desktop 앱)** 
 
 ```
 OPEN CASCADE 제공 무료 뷰어/변환기
