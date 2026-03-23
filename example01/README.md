@@ -3,6 +3,8 @@
 > SolidWorks로 설계된 SG90 서보모터 어셈블리를 GLB 포맷으로 변환하고,  
 > Node.js 웹 서버 + Three.js로 브라우저에서 3D 인터랙티브 제어하는 완전 교육 가이드
 
+https://grabcad.com/library/sg90-micro-servo-9g-tower-pro-1
+
 ---
 
 ## 📌 프로젝트 소개
