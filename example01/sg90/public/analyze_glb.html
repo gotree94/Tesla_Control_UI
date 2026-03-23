@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>SG90 GLB 구조 분석</title>
+    <style>
+        body { font-family: monospace; background:#1a1a2e; color:#e0e0e0; padding:20px; }
+        h1   { color:#4fc3f7; }
+        pre  { background:#0d1b2a; padding:16px; border-radius:8px;
+               white-space:pre-wrap; line-height:1.6; font-size:13px; }
+        .ok  { color:#81c784; }
+        .warn{ color:#ffb74d; }
+        .err { color:#ef5350; }
+    </style>
+</head>
+<body>
+    <h1>🔍 SG90 Servo GLB 구조 분석</h1>
+    <pre id="output">로딩 중...</pre>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.159.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.159.0/examples/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+        const output = document.getElementById('output');
+        const loader = new GLTFLoader();
+
+        // ── Three.js에서 탐색할 파트 이름 목록 ──
+        const EXPECTED_PARTS = [
+            'sg90_body',
+            'sg90_horn',       // 회전 제어 대상 — 필수!
+            'sg90_bottom',
+            'sg90_top',
+            'sg90_screw_long',
+            'sg90_screw_short',
+        ];
+
+        loader.load('sg90_servo.glb', (gltf) => {
+            let r = '=== SG90 Servo GLB 구조 분석 ===\n\n';
+
+            // ── 씬 전체 트리 출력 ──
+            r += '▶ 전체 씬 구조:\n';
+            r += '─'.repeat(60) + '\n';
+
+            let meshCount = 0;
+            let matCount  = 0;
+
+            gltf.scene.traverse((child) => {
+                const depth  = getDepth(child);
+                const indent = '  '.repeat(depth);
+                r += `${indent}[${child.type}] ${child.name || '(unnamed)'}\n`;
+
+                if (child.isMesh) {
+                    meshCount++;
+                    const verts = child.geometry.attributes.position?.count ?? 0;
+                    r += `${indent}  ├ vertices : ${verts}\n`;
+
+                    if (child.material) {
+                        const mats = Array.isArray(child.material)
+                            ? child.material : [child.material];
+                        mats.forEach(m => {
+                            r += `${indent}  ├ material : ${m.name || m.type}\n`;
+                            matCount++;
+                        });
+                    }
+                }
+            });
+
+            // ── 통계 ──
+            r += '\n' + '='.repeat(60) + '\n';
+            r += `총 메시 수     : ${meshCount}\n`;
+            r += `총 재질 수     : ${matCount}\n`;
+            r += '='.repeat(60) + '\n\n';
+
+            // ── 애니메이션 정보 ──
+            r += '▶ 애니메이션:\n';
+            r += '─'.repeat(60) + '\n';
+            if (gltf.animations?.length > 0) {
+                gltf.animations.forEach((anim, i) => {
+                    r += `  Animation[${i}]: "${anim.name}" (${anim.duration.toFixed(2)}s)\n`;
+                    anim.tracks.forEach(t => r += `    - ${t.name}\n`);
+                });
+            } else {
+                r += '  애니메이션 없음 (정상 — Three.js 코드로 제어)\n';
+            }
+
+            // ── 파트 이름 검증 ──
+            r += '\n' + '='.repeat(60) + '\n';
+            r += '▶ 파트 이름 검증:\n';
+            r += '─'.repeat(60) + '\n';
+
+            EXPECTED_PARTS.forEach(name => {
+                const found = gltf.scene.getObjectByName(name);
+                const icon  = found ? '✅' : '❌';
+                const type  = found ? `[${found.type}]` : '미발견';
+                r += `  ${icon} ${name.padEnd(20)} ${type}\n`;
+            });
+
+            // ── 결론 ──
+            r += '\n' + '='.repeat(60) + '\n';
+            r += '▶ 결론:\n';
+            r += '─'.repeat(60) + '\n';
+
+            const hornFound = gltf.scene.getObjectByName('sg90_horn');
+            if (hornFound) {
+                r += '  ✅ sg90_horn 파트 탐색 성공!\n';
+                r += '  ✅ Three.js 서보 제어 준비 완료\n';
+            } else {
+                r += '  ❌ sg90_horn 파트를 찾지 못했습니다.\n\n';
+                r += '  발견된 모든 메시 이름:\n';
+                gltf.scene.traverse(c => {
+                    if (c.isMesh) r += `    - "${c.name}"\n`;
+                });
+                r += '\n  → Blender에서 혼 오브젝트 이름을 "sg90_horn"으로 변경 후 재내보내기\n';
+            }
+
+            output.textContent = r;
+
+        }, (xhr) => {
+            const pct = xhr.total ? Math.round(xhr.loaded / xhr.total * 100) : '?';
+            output.textContent = `로딩 중... ${pct}%`;
+        }, (err) => {
+            output.textContent = `❌ 로드 실패:\n${err}\n\nsg90_servo.glb 파일이 서버 루트(public/)에 있는지 확인하세요.`;
+        });
+
+        function getDepth(obj) {
+            let d = 0, cur = obj;
+            while (cur.parent) { d++; cur = cur.parent; }
+            return d;
+        }
+    </script>
+</body>
+</html>
