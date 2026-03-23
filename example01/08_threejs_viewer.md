@@ -83,21 +83,13 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
     <title>🦾 SG90 Servo 3D Viewer</title>
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
-
         body {
             font-family: 'Segoe UI', sans-serif;
-            background: #1a1a2e;
-            color: #e0e0e0;
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
+            background: #1a1a2e; color: #e0e0e0;
+            display: flex; height: 100vh; overflow: hidden;
         }
-
-        /* ── 3D 뷰어 영역 ── */
         #viewer { flex:1; position:relative; }
         #canvas  { width:100%; height:100%; display:block; }
-
-        /* ── 로딩 오버레이 ── */
         #loading {
             position: absolute; inset: 0;
             display: flex; flex-direction: column;
@@ -107,64 +99,42 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
         }
         .spinner {
             width: 48px; height: 48px;
-            border: 4px solid #333;
-            border-top-color: #4fc3f7;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
+            border: 4px solid #333; border-top-color: #4fc3f7;
+            border-radius: 50%; animation: spin 0.8s linear infinite;
         }
         @keyframes spin { to { transform:rotate(360deg); } }
-
-        /* ── 제어 패널 ── */
         #panel {
-            width: 280px;
-            background: #16213e;
+            width: 280px; background: #16213e;
             border-left: 1px solid #0f3460;
-            padding: 24px 16px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            overflow-y: auto;
+            padding: 24px 16px; display: flex;
+            flex-direction: column; gap: 20px; overflow-y: auto;
         }
         #panel h2 { font-size:1rem; color:#4fc3f7; border-bottom:1px solid #0f3460; padding-bottom:8px; }
-
         .ctrl-group label { display:block; font-size:0.8rem; color:#90caf9; margin-bottom:6px; }
-
         #angle-display {
             text-align: center; font-size: 2.4rem;
             font-weight: bold; color: #4fc3f7;
             font-variant-numeric: tabular-nums;
-            letter-spacing: 0.05em;
         }
-
         input[type=range] { width:100%; accent-color:#4fc3f7; cursor:pointer; }
-
         .preset-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
         .preset-btn {
-            padding: 8px 4px;
-            background: #0f3460; border: 1px solid #1a5276;
-            border-radius: 6px; color: #e0e0e0;
-            font-size: 0.8rem; cursor: pointer;
-            transition: all 0.15s;
+            padding: 8px 4px; background: #0f3460;
+            border: 1px solid #1a5276; border-radius: 6px;
+            color: #e0e0e0; font-size: 0.8rem; cursor: pointer; transition: all 0.15s;
         }
-        .preset-btn:hover, .preset-btn.active {
-            background: #4fc3f7; color: #1a1a2e; border-color: #4fc3f7;
-        }
-
+        .preset-btn:hover, .preset-btn.active { background: #4fc3f7; color: #1a1a2e; border-color: #4fc3f7; }
         select {
-            width:100%; padding:6px 8px;
-            background:#0f3460; border:1px solid #1a5276;
-            border-radius:6px; color:#e0e0e0; font-size:0.85rem;
+            width:100%; padding:6px 8px; background:#0f3460;
+            border:1px solid #1a5276; border-radius:6px; color:#e0e0e0; font-size:0.85rem;
         }
-
         #status { font-size:0.75rem; color:#78909c; text-align:center; min-height:1.2em; }
         #status.moving { color:#ffb74d; }
         #status.done   { color:#81c784; }
         #status.error  { color:#ef5350; }
-
         .info-box {
             background: #0d1b2a; border-radius:8px;
-            padding: 12px; font-size:0.78rem;
-            line-height: 1.9; color: #90a4ae;
+            padding: 12px; font-size:0.78rem; line-height: 1.9; color: #90a4ae;
         }
         .info-box strong { color:#4fc3f7; display:block; margin-bottom:4px; }
     </style>
@@ -249,9 +219,6 @@ import * as THREE from 'three';
 import { GLTFLoader }    from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-// ══════════════════════════════════════
-// DOM 참조
-// ══════════════════════════════════════
 const canvas    = document.getElementById('canvas');
 const loading   = document.getElementById('loading');
 const loadMsg   = document.getElementById('load-msg');
@@ -261,114 +228,107 @@ const speedSel  = document.getElementById('speed');
 const statusEl  = document.getElementById('status');
 const sweepBtn  = document.getElementById('sweep-btn');
 
-// ══════════════════════════════════════
-// 1. Renderer 설정
-// ══════════════════════════════════════
+// ── Renderer ──
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type    = THREE.PCFSoftShadowMap;
 renderer.outputColorSpace  = THREE.SRGBColorSpace;
 
-// ══════════════════════════════════════
-// 2. Scene
-// ══════════════════════════════════════
+// ── Scene ──
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x1a1a2e);
-scene.fog        = new THREE.Fog(0x1a1a2e, 300, 600);  // 원거리 안개
+scene.fog        = new THREE.Fog(0x1a1a2e, 300, 600);
 
-// ══════════════════════════════════════
-// 3. Camera
-// ══════════════════════════════════════
+// ── Camera ──
 const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
 camera.position.set(0, 60, 120);
 
-// ══════════════════════════════════════
-// 4. OrbitControls
-// ══════════════════════════════════════
+// ── Controls ──
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.08;
 controls.minDistance   = 20;
 controls.maxDistance   = 300;
 controls.target.set(0, 15, 0);
-
-// 더블클릭 → 카메라 초기화
-renderer.domElement.addEventListener('dblclick', resetCamera);
-function resetCamera() {
+renderer.domElement.addEventListener('dblclick', () => {
     camera.position.set(0, 60, 120);
     controls.target.set(0, 15, 0);
     controls.update();
-}
+});
 
-// ══════════════════════════════════════
-// 5. 조명
-// ══════════════════════════════════════
-// 환경광
+// ── 조명 ──
 scene.add(new THREE.AmbientLight(0xffffff, 0.5));
-
-// 메인 디렉셔널 라이트 (그림자 포함)
-const sun = new THREE.DirectionalLight(0xffffff, 1.4);
+const sun = new THREE.DirectionalLight(0xffffff, 100);
 sun.position.set(60, 100, 60);
 sun.castShadow = true;
 Object.assign(sun.shadow.mapSize, { width:2048, height:2048 });
-Object.assign(sun.shadow.camera, { near:1, far:300, left:-80, right:80, top:80, bottom:-80 });
+Object.assign(sun.shadow.camera, { near:1, far:10, left:-80, right:80, top:10, bottom:-10 });
 scene.add(sun);
-
-// 보조 포인트 라이트 (파란빛 — 그림자 없음)
 const fill = new THREE.PointLight(0x4fc3f7, 0.6, 250);
 fill.position.set(-60, 40, -50);
 scene.add(fill);
-
-// 바닥 그리드
 const grid = new THREE.GridHelper(200, 20, 0x0f3460, 0x0f3460);
 grid.position.y = -2;
 scene.add(grid);
 
-// ══════════════════════════════════════
-// 6. GLB 모델 로드
-// ══════════════════════════════════════
+// ── 상태 ──
 let hornMesh     = null;
 let targetAngle  = 90;
 let currentAngle = 90;
 let sweeping     = false;
 let sweepDir     = 1;
 
+// ══════════════════════════════════════════════════════════════
+// GLB 로드 및 보정
+//
+// 분석 결과:
+//   - 노드 이름: NAUO1~NAUO7 (Blender에서 이름 미설정 상태)
+//   - NAUO1 = 본체(1_Pea), NAUO2 = 혼(2_Pea), NAUO3~4 = 커버류,
+//     NAUO5~6 = M2x8 나사, NAUO7 = M2x4 나사
+//   - 모터가 Z-up 좌표계로 저장됨 → 래퍼를 X축 -90° 회전해서 세우기
+//   - 모든 파트가 Y=0.0278 오프셋 → 정규화 후 바닥 보정으로 해결
+// ══════════════════════════════════════════════════════════════
 new GLTFLoader().load(
     'sg90_servo.glb',
 
     (gltf) => {
         const model = gltf.scene;
 
-        // 크기 자동 정규화 (50mm 기준)
-        const box    = new THREE.Box3().setFromObject(model);
+        // 1) 보정 래퍼: Z-up → Y-up (모터 세우기)
+        const wrapper = new THREE.Group();
+        wrapper.rotation.x = Math.PI / 2;
+        wrapper.add(model);
+        scene.add(wrapper);
+
+        // 2) 크기 정규화 (50 units 기준)
+        const box    = new THREE.Box3().setFromObject(wrapper);
         const maxDim = box.getSize(new THREE.Vector3()).length();
-        model.scale.setScalar(50 / maxDim);
+        wrapper.scale.setScalar(50 / maxDim);
 
-        // 바닥에 붙이기
-        box.setFromObject(model);
-        model.position.y = -box.min.y;
+        // 3) 바닥(Y=0)에 붙이기
+        box.setFromObject(wrapper);
+        wrapper.position.y = -box.min.y;
 
-        // 그림자 설정
-        model.traverse(c => {
-            if (c.isMesh) {
-                c.castShadow    = true;
-                c.receiveShadow = true;
-            }
+        // 4) 그림자
+        wrapper.traverse(c => {
+            if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; }
         });
 
-        scene.add(model);
-
-        // 혼 파트 탐색
-        hornMesh = model.getObjectByName('sg90_horn');
+        // 5) 혼 탐색 순서:
+        //    ① sg90_horn (Blender에서 이름 설정했을 경우)
+        //    ② NAUO2     (현재 GLB의 2번 파트 = 혼 추정)
+        //    ③ 메시 중 버텍스 수가 가장 적은 것 (자동 폴백)
+        hornMesh = model.getObjectByName('sg90_horn')
+                || model.getObjectByName('NAUO2')
+                || findSmallestMesh(model);
 
         if (hornMesh) {
-            setStatus('✅ 모델 로드 완료 — 혼 제어 준비', 'done');
-            console.log('sg90_horn 탐색 성공:', hornMesh);
+            setStatus(`✅ 로드 완료 — 혼: [${hornMesh.name}]`, 'done');
+            console.log('혼 파트 탐색 성공:', hornMesh.name);
         } else {
-            setStatus('⚠️ sg90_horn 없음 — analyze_glb.html로 이름 확인', 'error');
-            console.warn('발견된 메시:', []);
-            model.traverse(c => { if (c.isMesh) console.warn(' -', c.name); });
+            setStatus('⚠️ 혼 파트 미발견 — 콘솔 확인', 'error');
+            model.traverse(c => { if (c.isMesh) console.warn('메시:', c.name); });
         }
 
         loading.style.display = 'none';
@@ -381,54 +341,54 @@ new GLTFLoader().load(
     },
 
     (err) => {
-        loadMsg.textContent = '❌ GLB 로드 실패 — 파일 경로 확인 (public/sg90_servo.glb)';
+        loadMsg.textContent = '❌ GLB 로드 실패 — public/sg90_servo.glb 경로 확인';
         console.error(err);
     }
 );
 
-// ══════════════════════════════════════
-// 7. 각도 제어 함수
-// ══════════════════════════════════════
+// 가장 작은(버텍스 수 최소) 메시를 혼 후보로 반환
+function findSmallestMesh(root) {
+    let best = null, minV = Infinity;
+    root.traverse(c => {
+        if (c.isMesh) {
+            const v = c.geometry.attributes.position?.count ?? 0;
+            if (v > 0 && v < minV) { minV = v; best = c; }
+        }
+    });
+    return best;
+}
 
-// 각도(도) → Three.js Y축 회전(라디안)
-// 90° 중립 기준, -90° ~ +90° 범위
+// ── 각도 제어 ──
+// 래퍼가 X축 -90° 보정됐으므로, 혼의 회전은 Y축
+// (원래 Z-up 기준 Z축 회전 → 보정 후 Y축과 동일)
 function degToRad(deg) {
     return THREE.MathUtils.degToRad(deg - 90);
 }
-
 function applyRotation(deg) {
     if (!hornMesh) return;
     hornMesh.rotation.y = degToRad(deg);
 }
-
 function setTargetAngle(deg) {
     sweeping = false;
     sweepBtn.textContent = '스윕';
     targetAngle = Math.max(0, Math.min(180, deg));
-    slider.value = targetAngle;
     updateUI(targetAngle);
 }
-
 function updateUI(deg) {
-    const rounded = Math.round(deg);
-    angleDisp.textContent = `${rounded}°`;
-    slider.value = rounded;
-    document.querySelectorAll('.preset-btn[data-angle]').forEach(btn => {
-        const a = parseInt(btn.dataset.angle);
-        btn.classList.toggle('active', a === rounded);
+    const r = Math.round(deg);
+    angleDisp.textContent = `${r}°`;
+    slider.value = r;
+    document.querySelectorAll('.preset-btn[data-angle]').forEach(b => {
+        b.classList.toggle('active', parseInt(b.dataset.angle) === r);
     });
 }
-
 function setStatus(msg, cls) {
     statusEl.textContent = msg;
     statusEl.className   = cls || '';
 }
 
-// ══════════════════════════════════════
-// 8. UI 이벤트
-// ══════════════════════════════════════
+// ── UI 이벤트 ──
 slider.addEventListener('input', () => setTargetAngle(parseInt(slider.value)));
-
 document.querySelectorAll('.preset-btn').forEach(btn => {
     btn.addEventListener('click', () => {
         const a = parseInt(btn.dataset.angle);
@@ -443,15 +403,11 @@ document.querySelectorAll('.preset-btn').forEach(btn => {
     });
 });
 
-// ══════════════════════════════════════
-// 9. 애니메이션 루프
-// ══════════════════════════════════════
+// ── 애니메이션 루프 ──
 function animate() {
     requestAnimationFrame(animate);
-
     const speed = parseFloat(speedSel.value);
 
-    // 스윕 모드
     if (sweeping) {
         targetAngle += sweepDir * 1.2;
         if (targetAngle >= 180) { targetAngle = 180; sweepDir = -1; }
@@ -459,7 +415,6 @@ function animate() {
         updateUI(targetAngle);
     }
 
-    // 보간 (Lerp)
     const diff = targetAngle - currentAngle;
     if (Math.abs(diff) > 0.05) {
         currentAngle += diff * Math.min(speed, 1);
@@ -475,9 +430,7 @@ function animate() {
     renderer.render(scene, camera);
 }
 
-// ══════════════════════════════════════
-// 10. 리사이즈 대응
-// ══════════════════════════════════════
+// ── 리사이즈 ──
 function onResize() {
     const w = canvas.parentElement.clientWidth;
     const h = canvas.parentElement.clientHeight;
@@ -487,11 +440,11 @@ function onResize() {
 }
 window.addEventListener('resize', onResize);
 onResize();
-
 animate();
 </script>
 </body>
 </html>
+
 ```
 
 ---
