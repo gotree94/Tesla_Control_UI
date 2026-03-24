@@ -72,7 +72,7 @@ sg90-servo-viewer/
 
 ```bash
 # 1. 저장소 클론
-git clone https://github.com/your-id/sg90-servo-viewer.git
+git clone https://github.com/gotree94/Tesla_Control_UI.git
 cd sg90-servo-viewer
 
 # 2. 서버 실행 (의존 패키지 없음 — Node.js 내장 모듈만 사용)
