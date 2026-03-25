@@ -27,17 +27,17 @@
 
 | 문서 파일 | 내용 |
 |-----------|------|
-| **[01_overview.md](./docs/01_overview.md)** | 프로젝트 개요 · SG90 스펙 · 전체 흐름도 |
-| **[02_environment.md](./docs/02_environment.md)** | 개발 환경 설치 (SolidWorks · Blender · Node.js) |
-| **[03_solidworks.md](./docs/03_solidworks.md)** | SolidWorks STEP 파일 분석 · 파트 구조 이해 |
-| **[04_blender_import.md](./docs/04_blender_import.md)** | Blender STEP 임포트 · 씬 구조 확인 |
-| **[05_blender_glb.md](./docs/05_blender_glb.md)** | 파트 분리 · Origin 설정 · GLB 내보내기 |
-| **[06_analyze_glb.md](./docs/06_analyze_glb.md)** | analyze_glb.html로 GLB 구조 검증 |
-| **[07_nodejs_server.md](./docs/07_nodejs_server.md)** | Node.js 웹 서버 구성 · MIME · 보안 |
-| **[08_threejs_viewer.md](./docs/08_threejs_viewer.md)** | Three.js 3D 뷰어 구성 · 조명 · OrbitControls |
-| **[09_servo_control.md](./docs/09_servo_control.md)** | 서보 각도 제어 로직 · 보간 애니메이션 |
-| **[10_run_test.md](./docs/10_run_test.md)** | 실행 · 브라우저 확인 · 테스트 시나리오 |
-| **[11_troubleshoot.md](./docs/11_troubleshoot.md)** | 트러블슈팅 · FAQ |
+| **[01_overview.md](./01_overview.md)** | 프로젝트 개요 · SG90 스펙 · 전체 흐름도 |
+| **[02_environment.md](./02_environment.md)** | 개발 환경 설치 (SolidWorks · Blender · Node.js) |
+| **[03_solidworks.md](./03_solidworks.md)** | SolidWorks STEP 파일 분석 · 파트 구조 이해 |
+| **[04_blender_import.md](./04_blender_import.md)** | Blender STEP 임포트 · 씬 구조 확인 |
+| **[05_blender_glb.md](./05_blender_glb.md)** | 파트 분리 · Origin 설정 · GLB 내보내기 |
+| **[06_analyze_glb.md](./06_analyze_glb.md)** | analyze_glb.html로 GLB 구조 검증 |
+| **[07_nodejs_server.md](./07_nodejs_server.md)** | Node.js 웹 서버 구성 · MIME · 보안 |
+| **[08_threejs_viewer.md](./08_threejs_viewer.md)** | Three.js 3D 뷰어 구성 · 조명 · OrbitControls |
+| **[09_servo_control.md](./09_servo_control.md)** | 서보 각도 제어 로직 · 보간 애니메이션 |
+| **[10_run_test.md](./10_run_test.md)** | 실행 · 브라우저 확인 · 테스트 시나리오 |
+| **[11_troubleshoot.md](./11_troubleshoot.md)** | 트러블슈팅 · FAQ |
 
 ---
 
