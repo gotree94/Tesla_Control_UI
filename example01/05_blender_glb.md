@@ -270,7 +270,8 @@ Blender에서 내보낸 GLB를 서버 없이 바로 확인할 수 있는 도구�
 
 ## CAD-Assistant GLB 내보내기
 
-cad-assistant : https://www.opencascade.com/products/cad-assistant/
+* 홈페이지 : cad-assistant : https://www.opencascade.com/products/cad-assistant/
+* 다운로드 링크 : https://www.opencascade.com/sites/default/files/private/occt/applications/cad_assistant_1.6.0_2021-10-05_win64.zip
 
 <img width="1545" height="734" alt="CONV_002" src="https://github.com/user-attachments/assets/1072c77d-bc38-4a35-91a0-7664b1d50f78" />
 
