@@ -268,4 +268,40 @@ Blender에서 내보낸 GLB를 서버 없이 바로 확인할 수 있는 도구�
 
 ---
 
+## cad-assistant
+
+cad-assistant : https://www.opencascade.com/products/cad-assistant/
+
+<img width="1545" height="734" alt="CONV_002" src="https://github.com/user-attachments/assets/1072c77d-bc38-4a35-91a0-7664b1d50f78" />
+
+<img width="1545" height="734" alt="CONV_001" src="https://github.com/user-attachments/assets/528619cf-0814-40e5-b7f5-1d587f526172" />
+
+* 분석한 구조 내용 검색
+```
+  새로운 1 (8 일치)
+	줄    6: [Group] (unnamed)
+	줄    8:     [Group] SG90_-_Micro_Servo_9g_-_Tower_Pro1_Pea
+	줄 1938:     [Group] SG90_-_Micro_Servo_9g_-_Tower_Pro2_Pea
+	줄 2557:     [Group] SG90_-_Micro_Servo_9g_-_Tower_Pro3_Pea
+	줄 3224:     [Group] SG90_-_Micro_Servo_9g_-_Tower_Pro4_Pea
+	줄 3942:     [Group] SG90_-_Micro_Servo_9g_-_Tower_Pro5_BS_EN_ISO_7045_-_M2_x_8_-_Z_-_8S
+	줄 4321:     [Group] SG90_-_Micro_Servo_9g_-_Tower_Pro5_BS_EN_ISO_7045_-_M2_x_8_-_Z_-_8S_1
+	줄 4700:     [Group] SG90_-_Micro_Servo_9g_-_Tower_Pro6_BS_EN_ISO_7045_-_M2_x_4_-_Z_-_4S
+
+```
+
+* index.html 수정
+```
+        // 5) 혼 탐색 순서:
+        //    ① sg90_horn (Blender에서 이름 설정했을 경우)
+        //    ② NAUO2     (현재 GLB의 2번 파트 = 혼 추정)
+        //    ③ 메시 중 버텍스 수가 가장 적은 것 (자동 폴백)
+        //hornMesh = model.getObjectByName('sg90_horn')
+		hornMesh = model.getObjectByName('SG90_-_Micro_Servo_9g_-_Tower_Pro2_Pea')
+                //|| model.getObjectByName('NAUO2')
+                || findSmallestMesh(model);
+```
+
+---
+
 ← [04. Blender 임포트](./04_blender_import.md) | 다음 → [06. GLB 구조 검증](./06_analyze_glb.md)
