@@ -277,7 +277,7 @@ Blender에서 내보낸 GLB를 서버 없이 바로 확인할 수 있는 도구�
 
 <img width="1545" height="734" alt="CONV_001" src="https://github.com/user-attachments/assets/528619cf-0814-40e5-b7f5-1d587f526172" />
 
-* 분석한 구조 내용 검색
+* Cad Assistant 에서 Export한 glb 파일 분석한 구조 내용 검색
 ```
   새로운 1 (8 일치)
 	줄    6: [Group] (unnamed)
@@ -290,6 +290,44 @@ Blender에서 내보낸 GLB를 서버 없이 바로 확인할 수 있는 도구�
 	줄 4700:     [Group] SG90_-_Micro_Servo_9g_-_Tower_Pro6_BS_EN_ISO_7045_-_M2_x_4_-_Z_-_4S
 
 ```
+
+* FreeCAD 에서 Export한 glb 파일 분석한 구조 내용 검색
+```
+찾기 "[Group] " (1 개 파일을 검색하여 1 개 파일에서 20 개 일치) [일반]
+  새로운 2 (20 일치)
+	줄    6: [Group] (unnamed)
+	줄    9:       [Group] SG90_-_Micro_Servo_9g_-_Tower_Pro1_PeÂa
+	줄   40:       [Group] SG90_-_Micro_Servo_9g_-_Tower_Pro1_PeÂa001
+	줄  191:       [Group] SG90_-_Micro_Servo_9g_-_Tower_Pro1_PeÂa002
+	줄  342:       [Group] SG90_-_Micro_Servo_9g_-_Tower_Pro1_PeÂa003
+	줄  400:       [Group] SG90_-_Micro_Servo_9g_-_Tower_Pro1_PeÂa004
+	줄  458:       [Group] SG90_-_Micro_Servo_9g_-_Tower_Pro1_PeÂa005
+	줄  516:       [Group] SG90_-_Micro_Servo_9g_-_Tower_Pro1_PeÂa006
+	줄  574:       [Group] SG90_-_Micro_Servo_9g_-_Tower_Pro1_PeÂa007
+	줄 1046:       [Group] SG90_-_Micro_Servo_9g_-_Tower_Pro1_PeÂa008
+	줄 1059:       [Group] SG90_-_Micro_Servo_9g_-_Tower_Pro1_PeÂa009
+	줄 1072:       [Group] SG90_-_Micro_Servo_9g_-_Tower_Pro1_PeÂa010
+	줄 1085:       [Group] SG90_-_Micro_Servo_9g_-_Tower_Pro1_PeÂa011
+	줄 1392:       [Group] SG90_-_Micro_Servo_9g_-_Tower_Pro1_PeÂa012
+	줄 1951:     [Group] SG90_-_Micro_Servo_9g_-_Tower_Pro2_PeÂa
+	줄 2570:     [Group] SG90_-_Micro_Servo_9g_-_Tower_Pro3_PeÂa
+	줄 3237:     [Group] SG90_-_Micro_Servo_9g_-_Tower_Pro4_PeÂa
+	줄 3955:     [Group] SG90_-_Micro_Servo_9g_-_Tower_Pro5_BS_EN_ISO_7045_-_M2_x_8_-_Z_-_8S
+	줄 4334:     [Group] SG90_-_Micro_Servo_9g_-_Tower_Pro5_BS_EN_ISO_7045_-_M2_x_8_-_Z_-_8S001
+	줄 4713:     [Group] SG90_-_Micro_Servo_9g_-_Tower_Pro6_BS_EN_ISO_7045_-_M2_x_4_-_Z_-_4S
+찾기 "[Group] " (1 개 파일을 검색하여 1 개 파일에서 8 개 일치) [일반]
+  새로운 1 (8 일치)
+	줄    6: [Group] (unnamed)
+	줄    8:     [Group] SG90_-_Micro_Servo_9g_-_Tower_Pro1_Pea
+	줄 1938:     [Group] SG90_-_Micro_Servo_9g_-_Tower_Pro2_Pea
+	줄 2557:     [Group] SG90_-_Micro_Servo_9g_-_Tower_Pro3_Pea
+	줄 3224:     [Group] SG90_-_Micro_Servo_9g_-_Tower_Pro4_Pea
+	줄 3942:     [Group] SG90_-_Micro_Servo_9g_-_Tower_Pro5_BS_EN_ISO_7045_-_M2_x_8_-_Z_-_8S
+	줄 4321:     [Group] SG90_-_Micro_Servo_9g_-_Tower_Pro5_BS_EN_ISO_7045_-_M2_x_8_-_Z_-_8S_1
+	줄 4700:     [Group] SG90_-_Micro_Servo_9g_-_Tower_Pro6_BS_EN_ISO_7045_-_M2_x_4_-_Z_-_4S
+
+```
+
 
 * index.html 수정
 ```
